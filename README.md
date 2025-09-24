@@ -1,3 +1,5 @@
+<!-- panvimdoc-ignore-start -->
+
 # CodeCompanion History Extension
 
 [![Neovim](https://img.shields.io/badge/Neovim-57A143?style=flat-square&logo=neovim&logoColor=white)](https://neovim.io)
@@ -8,7 +10,7 @@
 
 A history management extension for [codecompanion.nvim](https://codecompanion.olimorris.dev/) that enables saving, browsing and restoring chat sessions.
 
-
+<!-- panvimdoc-ignore-end -->
 <p>
     <video controls muted src="https://github.com/user-attachments/assets/04a6ad1f-8351-4381-ae60-00c352a1670c"></video>
 </p>
@@ -35,7 +37,7 @@ A history management extension for [codecompanion.nvim](https://codecompanion.ol
 - **Customizable generation**: Configure adapter, model, and system prompts
 - **Summary browsing**: Dedicated browser with `gbs` to explore all summaries
 
-### 🧠 Memory System (@memory tool)
+### 🧠 Memory System (`@memory` tool)
 - **Vector-based search**: Uses VectorCode CLI to index and search through chat summaries
 - **Automatic indexing**: Optionally index summaries as they are generated
 - **Smart integration**: Available as `@memory` tool in new chats when VectorCode is installed
@@ -395,6 +397,7 @@ local summary_content = history.load_summary("some_save_id")
 ## ⚙️ How It Works
 
 
+<!-- panvimdoc-ignore-start -->
 ```mermaid
 graph TD
     subgraph CodeCompanion Core Lifecycle
@@ -437,6 +440,7 @@ graph TD
         R -- Delete --> O;
     end
 ```
+<!-- panvimdoc-ignore-end -->
 
 Here's what's happening in simple terms:
 
@@ -527,7 +531,7 @@ The extension integrates with CodeCompanion through a robust event-driven archit
 
 Special thanks to:
 - [Oli Morris](https://github.com/olimorris) for creating the amazing [CodeCompanion.nvim](https://codecompanion.olimorris.dev) plugin - a highly configurable and powerful coding assistant for Neovim.
-- [David](https://github.com/Davidyz) for the awesome [VectorCode](https://github.com/Davidyz/VectorCode) CLI and adding the @memory tool integration. 
+- [David](https://github.com/Davidyz) for the awesome [VectorCode](https://github.com/Davidyz/VectorCode) CLI and adding the `@memory` tool integration. 
 
 ## 📄 License
 
