@@ -5,24 +5,24 @@ local T = new_set()
 local child = h.new_child_neovim()
 
 T = new_set({
-    hooks = {
-        pre_once = function()
-            child.setup()
-            -- Setup logging once for all tests
-            child.lua([[
+  hooks = {
+    pre_once = function()
+      child.setup()
+      -- Setup logging once for all tests
+      child.lua([[
                 local log = require("codecompanion._extensions.history.log")
                 log.setup_logging(false) -- Disable logging for tests
             ]])
-        end,
-        post_once = child.stop,
-    },
+    end,
+    post_once = child.stop,
+  },
 })
 
 -- Picker Resolution Tests
 T["Picker Resolution"] = new_set()
 
 T["Picker Resolution"]["should auto-resolve to valid picker"] = function()
-    local result = child.lua([[
+  local result = child.lua([[
         local pickers = require("codecompanion._extensions.history.pickers")
         local resolved = pickers.history
         local valid_options = { "telescope", "fzf-lua", "snacks", "default" }
@@ -33,12 +33,12 @@ T["Picker Resolution"]["should auto-resolve to valid picker"] = function()
         }
     ]])
 
-    eq(true, result.is_valid)
-    eq(true, result.is_string)
+  eq(true, result.is_valid)
+  eq(true, result.is_string)
 end
 
 T["Picker Resolution"]["should use resolved picker in history init"] = function()
-    local result = child.lua([[
+  local result = child.lua([[
         -- Test that history extension uses the auto-resolved picker
         local History = require("codecompanion._extensions.history").History
         local pickers = require("codecompanion._extensions.history.pickers")
@@ -60,8 +60,8 @@ T["Picker Resolution"]["should use resolved picker in history init"] = function(
         }
     ]])
 
-    eq(true, result.pickers_match)
-    eq("string", type(result.picker_from_init))
+  eq(true, result.pickers_match)
+  eq("string", type(result.picker_from_init))
 end
 
 return T

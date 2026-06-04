@@ -4,10 +4,10 @@ local T = new_set()
 local child = h.new_child_neovim()
 
 T = new_set({
-    hooks = {
-        pre_case = function()
-            child.setup()
-            child.lua([[
+  hooks = {
+    pre_case = function()
+      child.setup()
+      child.lua([[
               h = require('tests.helpers')
               cc_h = require('tests.cc_helpers')
               codecompanion = cc_h.setup_plugin({
@@ -27,43 +27,43 @@ T = new_set({
                 }
               })
             ]])
-        end,
-        post_case = function() end,
+    end,
+    post_case = function() end,
 
-        post_once = child.stop,
-    },
+    post_once = child.stop,
+  },
 })
 
 -- Test the History module initialization
 T["History module"] = new_set()
 
 T["History module"]["should be loaded"] = function()
-    local history_exists = child.lua_get([[
+  local history_exists = child.lua_get([[
       package.loaded["codecompanion._extensions.history"] ~= nil
   ]])
-    eq(true, history_exists)
+  eq(true, history_exists)
 end
 
 T["History module"]["available in codecompanion"] = function()
-    local has_property = child.lua_get([[
+  local has_property = child.lua_get([[
       codecompanion.extensions.history ~= nil
     ]])
-    eq(true, has_property)
+  eq(true, has_property)
 end
 
 T["History module"]["should register :CodeCompanionHistory command"] = function()
-    local has_command = child.lua_get([[
+  local has_command = child.lua_get([[
       vim.fn.exists(":CodeCompanionHistory") == 2
     ]])
-    eq(true, has_command)
+  eq(true, has_command)
 end
 
 T["History module"]["should register keymap"] = function()
-    local has_keymap = child.lua([[
+  local has_keymap = child.lua([[
       local keymap = require("codecompanion.config").interactions.chat.keymaps["Saved Chats"]
       return keymap and keymap.modes.n == "gh"
     ]])
-    eq(true, has_keymap)
+  eq(true, has_keymap)
 end
 
 return T

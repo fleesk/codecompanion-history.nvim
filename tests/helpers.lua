@@ -2,224 +2,224 @@ local Helpers = {}
 
 -- Monkey-patch `MiniTest.new_child_neovim` with helpful wrappers
 Helpers.new_child_neovim = function()
-    local child = MiniTest.new_child_neovim()
+  local child = MiniTest.new_child_neovim()
 
-    local prevent_hanging = function(method)
-        if not child.is_blocked() then
-            return
-        end
-
-        local msg = string.format("Can not use `child.%s` because child process is blocked.", method)
-        error(msg)
+  local prevent_hanging = function(method)
+    if not child.is_blocked() then
+      return
     end
 
-    child.setup = function()
-        child.restart({ "-u", "scripts/minimal_init.lua" })
-        child.o.statusline = ""
-        child.o.laststatus = 0
-        -- Change initial buffer to be readonly. This not only increases execution
-        -- speed, but more closely resembles manually opened Neovim.
-        child.bo.readonly = false
+    local msg = string.format("Can not use `child.%s` because child process is blocked.", method)
+    error(msg)
+  end
+
+  child.setup = function()
+    child.restart({ "-u", "scripts/minimal_init.lua" })
+    child.o.statusline = ""
+    child.o.laststatus = 0
+    -- Change initial buffer to be readonly. This not only increases execution
+    -- speed, but more closely resembles manually opened Neovim.
+    child.bo.readonly = false
+  end
+
+  child.set_lines = function(arr, start, finish)
+    prevent_hanging("set_lines")
+
+    if type(arr) == "string" then
+      arr = vim.split(arr, "\n")
     end
 
-    child.set_lines = function(arr, start, finish)
-        prevent_hanging("set_lines")
+    child.api.nvim_buf_set_lines(0, start or 0, finish or -1, false, arr)
+  end
 
-        if type(arr) == "string" then
-            arr = vim.split(arr, "\n")
-        end
+  child.get_lines = function(start, finish)
+    prevent_hanging("get_lines")
 
-        child.api.nvim_buf_set_lines(0, start or 0, finish or -1, false, arr)
+    return child.api.nvim_buf_get_lines(0, start or 0, finish or -1, false)
+  end
+
+  child.set_cursor = function(line, column, win_id)
+    prevent_hanging("set_cursor")
+
+    child.api.nvim_win_set_cursor(win_id or 0, { line, column })
+  end
+
+  child.get_cursor = function(win_id)
+    prevent_hanging("get_cursor")
+
+    return child.api.nvim_win_get_cursor(win_id or 0)
+  end
+
+  child.set_size = function(lines, columns)
+    prevent_hanging("set_size")
+
+    if type(lines) == "number" then
+      child.o.lines = lines
     end
 
-    child.get_lines = function(start, finish)
-        prevent_hanging("get_lines")
-
-        return child.api.nvim_buf_get_lines(0, start or 0, finish or -1, false)
+    if type(columns) == "number" then
+      child.o.columns = columns
     end
+  end
 
-    child.set_cursor = function(line, column, win_id)
-        prevent_hanging("set_cursor")
+  child.get_size = function()
+    prevent_hanging("get_size")
 
-        child.api.nvim_win_set_cursor(win_id or 0, { line, column })
-    end
+    return { child.o.lines, child.o.columns }
+  end
 
-    child.get_cursor = function(win_id)
-        prevent_hanging("get_cursor")
+  --- Assert visual marks
+  ---
+  --- Useful to validate visual selection
+  ---
+  ---@param first number|table Table with start position or number to check linewise.
+  ---@param last number|table Table with finish position or number to check linewise.
+  ---@private
+  child.expect_visual_marks = function(first, last)
+    child.ensure_normal_mode()
 
-        return child.api.nvim_win_get_cursor(win_id or 0)
-    end
+    first = type(first) == "number" and { first, 0 } or first
+    last = type(last) == "number" and { last, 2147483647 } or last
 
-    child.set_size = function(lines, columns)
-        prevent_hanging("set_size")
+    MiniTest.expect.equality(child.api.nvim_buf_get_mark(0, "<"), first)
+    MiniTest.expect.equality(child.api.nvim_buf_get_mark(0, ">"), last)
+  end
 
-        if type(lines) == "number" then
-            child.o.lines = lines
-        end
+  child.expect_screenshot = function(opts, path)
+    opts = opts or {}
+    local screenshot_opts = { redraw = opts.redraw }
+    opts.redraw = nil
+    MiniTest.expect.reference_screenshot(child.get_screenshot(screenshot_opts), path, opts)
+  end
 
-        if type(columns) == "number" then
-            child.o.columns = columns
-        end
-    end
+  -- Poke child's event loop to make it up to date
+  child.poke_eventloop = function()
+    child.api.nvim_eval("1")
+  end
 
-    child.get_size = function()
-        prevent_hanging("get_size")
-
-        return { child.o.lines, child.o.columns }
-    end
-
-    --- Assert visual marks
-    ---
-    --- Useful to validate visual selection
-    ---
-    ---@param first number|table Table with start position or number to check linewise.
-    ---@param last number|table Table with finish position or number to check linewise.
-    ---@private
-    child.expect_visual_marks = function(first, last)
-        child.ensure_normal_mode()
-
-        first = type(first) == "number" and { first, 0 } or first
-        last = type(last) == "number" and { last, 2147483647 } or last
-
-        MiniTest.expect.equality(child.api.nvim_buf_get_mark(0, "<"), first)
-        MiniTest.expect.equality(child.api.nvim_buf_get_mark(0, ">"), last)
-    end
-
-    child.expect_screenshot = function(opts, path)
-        opts = opts or {}
-        local screenshot_opts = { redraw = opts.redraw }
-        opts.redraw = nil
-        MiniTest.expect.reference_screenshot(child.get_screenshot(screenshot_opts), path, opts)
-    end
-
-    -- Poke child's event loop to make it up to date
-    child.poke_eventloop = function()
-        child.api.nvim_eval("1")
-    end
-
-    return child
+  return child
 end
 
 -- Detect CI
 Helpers.is_ci = function()
-    return os.getenv("CI") ~= nil
+  return os.getenv("CI") ~= nil
 end
 Helpers.skip_in_ci = function(msg)
-    if Helpers.is_ci() then
-        MiniTest.skip(msg or "Does not test properly in CI")
-    end
+  if Helpers.is_ci() then
+    MiniTest.skip(msg or "Does not test properly in CI")
+  end
 end
 
 -- Detect OS
 Helpers.is_windows = function()
-    return vim.fn.has("win32") == 1
+  return vim.fn.has("win32") == 1
 end
 Helpers.skip_on_windows = function(msg)
-    if Helpers.is_windows() then
-        MiniTest.skip(msg or "Does not test properly on Windows")
-    end
+  if Helpers.is_windows() then
+    MiniTest.skip(msg or "Does not test properly on Windows")
+  end
 end
 
 Helpers.is_macos = function()
-    return vim.fn.has("mac") == 1
+  return vim.fn.has("mac") == 1
 end
 Helpers.skip_on_macos = function(msg)
-    if Helpers.is_macos() then
-        MiniTest.skip(msg or "Does not test properly on MacOS")
-    end
+  if Helpers.is_macos() then
+    MiniTest.skip(msg or "Does not test properly on MacOS")
+  end
 end
 
 Helpers.is_linux = function()
-    return vim.fn.has("linux") == 1
+  return vim.fn.has("linux") == 1
 end
 Helpers.skip_on_linux = function(msg)
-    if Helpers.is_linux() then
-        MiniTest.skip(msg or "Does not test properly on Linux")
-    end
+  if Helpers.is_linux() then
+    MiniTest.skip(msg or "Does not test properly on Linux")
+  end
 end
 
 -- Standardized way of dealing with time
 Helpers.is_slow = function()
-    -- Create sample chat data for testing
-    return Helpers.is_ci() and (Helpers.is_windows() or Helpers.is_macos())
+  -- Create sample chat data for testing
+  return Helpers.is_ci() and (Helpers.is_windows() or Helpers.is_macos())
 end
 
 Helpers.create_test_chat = function(id)
-    return {
-        save_id = id or tostring(os.time()),
-        title = "Test Chat " .. (id or os.time()),
-        messages = {
-            {
-                role = "system",
-                content = "Test system message",
-                opts = { visible = false },
-            },
-            {
-                role = "user",
-                content = "Test user message",
-            },
-            {
-                role = "llm",
-                content = "Test response message",
-            },
-        },
-        settings = { model = "test-model" },
-        adapter = "test_adapter",
-        updated_at = os.time(),
-        refs = {},
-        schemas = {},
-        in_use = {},
-        cycle = 1,
-    }
+  return {
+    save_id = id or tostring(os.time()),
+    title = "Test Chat " .. (id or os.time()),
+    messages = {
+      {
+        role = "system",
+        content = "Test system message",
+        opts = { visible = false },
+      },
+      {
+        role = "user",
+        content = "Test user message",
+      },
+      {
+        role = "llm",
+        content = "Test response message",
+      },
+    },
+    settings = { model = "test-model" },
+    adapter = "test_adapter",
+    updated_at = os.time(),
+    refs = {},
+    schemas = {},
+    in_use = {},
+    cycle = 1,
+  }
 end
 
 Helpers.skip_if_slow = function(msg)
-    if Helpers.is_slow() then
-        MiniTest.skip(msg or "Does not test properly in slow context")
-    end
+  if Helpers.is_slow() then
+    MiniTest.skip(msg or "Does not test properly in slow context")
+  end
 end
 
 Helpers.get_time_const = function(delay)
-    local coef = 1
-    if Helpers.is_ci() then
-        if Helpers.is_linux() then
-            coef = 2
-        end
-        if Helpers.is_windows() then
-            coef = 5
-        end
-        if Helpers.is_macos() then
-            coef = 15
-        end
+  local coef = 1
+  if Helpers.is_ci() then
+    if Helpers.is_linux() then
+      coef = 2
     end
-    return coef * delay
+    if Helpers.is_windows() then
+      coef = 5
+    end
+    if Helpers.is_macos() then
+      coef = 15
+    end
+  end
+  return coef * delay
 end
 
 Helpers.sleep = function(ms, child, skip_slow)
-    if skip_slow then
-        Helpers.skip_if_slow("Skip because state checks after sleep are hard to make robust in slow context")
-    end
-    vim.loop.sleep(math.max(ms, 1))
-    if child ~= nil then
-        child.poke_eventloop()
-    end
+  if skip_slow then
+    Helpers.skip_if_slow("Skip because state checks after sleep are hard to make robust in slow context")
+  end
+  vim.loop.sleep(math.max(ms, 1))
+  if child ~= nil then
+    child.poke_eventloop()
+  end
 end
 
 -- Standardized way of setting number of retries
 Helpers.get_n_retry = function(n)
-    local coef = 1
-    if Helpers.is_ci() then
-        if Helpers.is_linux() then
-            coef = 2
-        end
-        if Helpers.is_windows() then
-            coef = 3
-        end
-        if Helpers.is_macos() then
-            coef = 4
-        end
+  local coef = 1
+  if Helpers.is_ci() then
+    if Helpers.is_linux() then
+      coef = 2
     end
-    return coef * n
+    if Helpers.is_windows() then
+      coef = 3
+    end
+    if Helpers.is_macos() then
+      coef = 4
+    end
+  end
+  return coef * n
 end
 
 return Helpers

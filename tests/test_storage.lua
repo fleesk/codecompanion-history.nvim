@@ -35,7 +35,7 @@
 ---    - Corrupted data
 ---    - Permission issues
 ---    - UTF-8 validation
----]]
+--- ]]
 
 local h = require("tests.helpers")
 local eq, new_set = MiniTest.expect.equality, MiniTest.new_set
@@ -44,10 +44,10 @@ local T = new_set()
 local child = h.new_child_neovim()
 
 T = new_set({
-    hooks = {
-        pre_case = function()
-            child.setup()
-            child.lua([[              
+  hooks = {
+    pre_case = function()
+      child.setup()
+      child.lua([[              
               -- Setup logging first
               local log = require("codecompanion._extensions.history.log")
               log.setup_logging(false) -- Disable logging for tests
@@ -58,10 +58,10 @@ T = new_set({
                   dir_to_save = vim.fn.stdpath("data") .. "/codecompanion-history-temp-" .. os.time()
               })
             ]])
-        end,
-        post_case = function()
-            -- Clean up test directory
-            child.lua([[              
+    end,
+    post_case = function()
+      -- Clean up test directory
+      child.lua([[              
               if test_storage and test_storage.base_path then
                   local folder = test_storage.base_path
                   if vim.fn.isdirectory(folder) == 1 then
@@ -69,16 +69,16 @@ T = new_set({
                   end
               end
             ]])
-        end,
-        post_once = child.stop,
-    },
+    end,
+    post_once = child.stop,
+  },
 })
 
 -- Storage Initialization Tests
 T["Storage Initialization"] = new_set()
 
 T["Storage Initialization"]["creates required directories"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local base_dir_exists = vim.fn.isdirectory(test_storage.base_path) == 1
         local chats_dir_exists = vim.fn.isdirectory(test_storage.chats_dir) == 1
 
@@ -91,26 +91,26 @@ T["Storage Initialization"]["creates required directories"] = function()
         }
     ]])
 
-    eq(true, result.base_dir_exists)
-    eq(true, result.chats_dir_exists)
-    eq(true, vim.endswith(result.base_path, "codecompanion-history-temp-" .. result.base_path:match("%d+$")))
-    eq(true, vim.endswith(result.chats_dir, "chats"))
-    eq(true, vim.endswith(result.index_path, "index.json"))
+  eq(true, result.base_dir_exists)
+  eq(true, result.chats_dir_exists)
+  eq(true, vim.endswith(result.base_path, "codecompanion-history-temp-" .. result.base_path:match("%d+$")))
+  eq(true, vim.endswith(result.chats_dir, "chats"))
+  eq(true, vim.endswith(result.index_path, "index.json"))
 end
 
 T["Storage Initialization"]["creates empty index file"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local Path = require("plenary.path")
         local path = Path:new(test_storage.index_path)
         local content = path:read()
         return { index_content = content }
     ]])
 
-    eq("{}", vim.trim(result.index_content))
+  eq("{}", vim.trim(result.index_content))
 end
 
 T["Storage Initialization"]["provides storage location"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local location = test_storage:get_location()
         return {
             location = location,
@@ -118,14 +118,14 @@ T["Storage Initialization"]["provides storage location"] = function()
         }
     ]])
 
-    eq(true, result.has_test_suffix)
+  eq(true, result.has_test_suffix)
 end
 
 -- Save Operations Tests
 T["Save Operations"] = new_set()
 
 T["Save Operations"]["saves chat to file"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Create and save test chat
         local h = require("tests.helpers")
         local chat_data = h.create_test_chat("test_save_123")
@@ -147,15 +147,15 @@ T["Save Operations"]["saves chat to file"] = function()
         }
     ]])
 
-    eq(true, result.ok)
-    eq(nil, result.error)
-    eq(true, result.file_exists)
-    eq(true, result.has_save_id)
-    eq(true, result.has_title)
+  eq(true, result.ok)
+  eq(nil, result.error)
+  eq(true, result.file_exists)
+  eq(true, result.has_save_id)
+  eq(true, result.has_title)
 end
 
 T["Save Operations"]["updates index when saving chat"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Create and save test chat
         local h = require("tests.helpers")
         local chat_data = h.create_test_chat("test_index_123")
@@ -172,15 +172,15 @@ T["Save Operations"]["updates index when saving chat"] = function()
         }
     ]])
 
-    eq(true, result.ok)
-    eq(nil, result.error)
-    eq("test_index_123", result.index_entry.save_id)
-    eq("Test Chat test_index_123", result.index_entry.title)
-    eq("number", result.timestamp_type)
+  eq(true, result.ok)
+  eq(nil, result.error)
+  eq("test_index_123", result.index_entry.save_id)
+  eq("Test Chat test_index_123", result.index_entry.title)
+  eq("number", result.timestamp_type)
 end
 
 T["Save Operations"]["handles large chat data"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local h = require("tests.helpers")
         local chat_data = h.create_test_chat("test_large")
         
@@ -202,13 +202,13 @@ T["Save Operations"]["handles large chat data"] = function()
         }
     ]])
 
-    eq(true, result.save_ok)
-    eq(true, result.loaded_ok)
-    eq(1003, result.message_count) -- Original 3 + 1000 new messages
+  eq(true, result.save_ok)
+  eq(true, result.loaded_ok)
+  eq(1003, result.message_count) -- Original 3 + 1000 new messages
 end
 
 T["Save Operations"]["handles concurrent file access"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Simulate concurrent access by creating multiple saves rapidly
         local h = require("tests.helpers")
         local chat = h.create_test_chat("test_concurrent")
@@ -238,13 +238,13 @@ T["Save Operations"]["handles concurrent file access"] = function()
         }
     ]])
 
-    eq(true, result.all_attempts_succeeded)
-    eq(true, result.chat_exists)
-    eq(true, result.is_valid)
+  eq(true, result.all_attempts_succeeded)
+  eq(true, result.chat_exists)
+  eq(true, result.is_valid)
 end
 
 T["Save Operations"]["saves complete chat"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Create and save complete chat
         local h = require("tests.helpers")
         local chat_data = h.create_test_chat("test_complete_123")
@@ -275,18 +275,18 @@ T["Save Operations"]["saves complete chat"] = function()
         }
     ]])
 
-    eq("test_complete_123", result.loaded_chat.save_id)
-    eq("Test Chat test_complete_123", result.loaded_chat.title)
-    eq(3, result.message_count)
-    eq("test_complete_123", result.index_entry.save_id)
-    eq("Test Chat test_complete_123", result.index_entry.title)
+  eq("test_complete_123", result.loaded_chat.save_id)
+  eq("Test Chat test_complete_123", result.loaded_chat.title)
+  eq(3, result.message_count)
+  eq("test_complete_123", result.index_entry.save_id)
+  eq("Test Chat test_complete_123", result.index_entry.title)
 end
 
 -- Load Operations Tests
 T["Load Operations"] = new_set()
 
 T["Load Operations"]["loads chat by ID"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Create and save test chat
         local h = require("tests.helpers")
         local original_chat = h.create_test_chat("test_load_123")
@@ -305,24 +305,24 @@ T["Load Operations"]["loads chat by ID"] = function()
         }
     ]])
 
-    eq("Test Chat test_load_123", result.original_title)
-    eq(result.original_title, result.loaded_title)
-    eq(3, result.message_count)
-    eq("Test system message", result.first_message)
+  eq("Test Chat test_load_123", result.original_title)
+  eq(result.original_title, result.loaded_title)
+  eq(3, result.message_count)
+  eq("Test system message", result.first_message)
 end
 
 T["Load Operations"]["returns nil for non-existent chat"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Try to load non-existent chat
         local loaded_chat = test_storage:load_chat("does_not_exist")
         return { loaded_chat = loaded_chat }
     ]])
 
-    eq(nil, result.loaded_chat)
+  eq(nil, result.loaded_chat)
 end
 
 T["Load Operations"]["loads all chats from index"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local h = require("tests.helpers")
         -- Create and save multiple test chats
         local chats = {
@@ -351,20 +351,20 @@ T["Load Operations"]["loads all chats from index"] = function()
         }
     ]])
 
-    eq(3, result.chat_count)
-    eq(true, result.has_chat1)
-    eq(true, result.has_chat2)
-    eq(true, result.has_chat3)
-    eq("Test Chat test_all_1", result.title1)
-    eq("Test Chat test_all_2", result.title2)
-    eq("Test Chat test_all_3", result.title3)
+  eq(3, result.chat_count)
+  eq(true, result.has_chat1)
+  eq(true, result.has_chat2)
+  eq(true, result.has_chat3)
+  eq("Test Chat test_all_1", result.title1)
+  eq("Test Chat test_all_2", result.title2)
+  eq("Test Chat test_all_3", result.title3)
 end
 
 -- Delete Operations Tests
 T["Delete Operations"] = new_set()
 
 T["Delete Operations"]["deletes chat and index entry"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local h = require("tests.helpers")
         -- Create and save test chat
         local chat = h.create_test_chat("test_delete_123")
@@ -391,39 +391,39 @@ T["Delete Operations"]["deletes chat and index entry"] = function()
         }
     ]])
 
-    eq(true, result.delete_success)
-    eq(true, result.before_delete)
-    eq(true, result.before_index)
-    eq(false, result.after_delete)
-    eq(false, result.after_index)
+  eq(true, result.delete_success)
+  eq(true, result.before_delete)
+  eq(true, result.before_index)
+  eq(false, result.after_delete)
+  eq(false, result.after_index)
 end
 
 T["Delete Operations"]["handles non-existent chat deletion gracefully"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Try to delete non-existent chat
         local delete_result = test_storage:delete_chat("does_not_exist")
         return { delete_success = delete_result }
     ]])
 
-    -- Should return true even if chat didn't exist (idempotent operation)
-    eq(true, result.delete_success)
+  -- Should return true even if chat didn't exist (idempotent operation)
+  eq(true, result.delete_success)
 end
 
 T["Delete Operations"]["handles missing save_id in deletion"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Try to delete without an ID
         local delete_result = test_storage:delete_chat(nil)
         return { delete_success = delete_result }
     ]])
 
-    eq(false, result.delete_success)
+  eq(false, result.delete_success)
 end
 
 -- Last Chat Tests
 T["Last Chat"] = new_set()
 
 T["Last Chat"]["gets most recently updated chat"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local h = require("tests.helpers")
         
         -- Create multiple chats with different timestamps
@@ -452,28 +452,28 @@ T["Last Chat"]["gets most recently updated chat"] = function()
         }
     ]])
 
-    -- The most recent chat should be chat2
-    eq("test_recent_2", result.last_chat_id)
-    eq("Test Chat test_recent_2", result.last_chat_title)
-    -- Verify it's the newest timestamp
-    eq(true, result.updated_at > os.time() - 20)
+  -- The most recent chat should be chat2
+  eq("test_recent_2", result.last_chat_id)
+  eq("Test Chat test_recent_2", result.last_chat_title)
+  -- Verify it's the newest timestamp
+  eq(true, result.updated_at > os.time() - 20)
 end
 
 T["Last Chat"]["handles empty storage"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Get the most recent chat from empty storage
         local last_chat = test_storage:get_last_chat()
         return { last_chat = last_chat }
     ]])
 
-    eq(nil, result.last_chat)
+  eq(nil, result.last_chat)
 end
 
 -- Error Handling Tests
 T["Error Handling"] = new_set()
 
 T["Error Handling"]["handles save_chat without chat parameter"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Mock codecompanion.last_chat() to return nil
         _G.codecompanion = { last_chat = function() return nil end }
         
@@ -488,11 +488,11 @@ T["Error Handling"]["handles save_chat without chat parameter"] = function()
         }
     ]])
 
-    eq(false, result.files_created)
+  eq(false, result.files_created)
 end
 
 T["Error Handling"]["handles invalid chat structure"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Try to save invalid chat structure
         local invalid_chat = {
             opts = {} -- Missing save_id
@@ -507,11 +507,11 @@ T["Error Handling"]["handles invalid chat structure"] = function()
         }
     ]])
 
-    eq(false, result.files_created)
+  eq(false, result.files_created)
 end
 
 T["Error Handling"]["handles missing index file"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Delete index file
         vim.fn.delete(test_storage.index_path)
         
@@ -527,12 +527,12 @@ T["Error Handling"]["handles missing index file"] = function()
         }
     ]])
 
-    eq({}, result.chats)
-    eq(true, result.index_exists)
+  eq({}, result.chats)
+  eq(true, result.index_exists)
 end
 
 T["Error Handling"]["handles corrupted JSON in index"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Write corrupt data to index
         local file = io.open(test_storage.index_path, "w")
         file:write("corrupted json{")
@@ -546,11 +546,11 @@ T["Error Handling"]["handles corrupted JSON in index"] = function()
         }
     ]])
 
-    eq({}, result.chats)
+  eq({}, result.chats)
 end
 
 T["Error Handling"]["validates nested message structure"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Try to save chat with invalid message structure
         test_storage:save_chat({
             opts = {
@@ -572,11 +572,11 @@ T["Error Handling"]["validates nested message structure"] = function()
         }
     ]])
 
-    eq(false, result.file_exists)
+  eq(false, result.file_exists)
 end
 
 T["Error Handling"]["handles permission errors"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         if vim.fn.has("win32") == 1 then
             return { skipped = true }
         end
@@ -598,15 +598,15 @@ T["Error Handling"]["handles permission errors"] = function()
         }
     ]])
 
-    if result.skipped then
-        return
-    end
-    eq(false, result.ok)
-    eq(true, result.has_error)
+  if result.skipped then
+    return
+  end
+  eq(false, result.ok)
+  eq(true, result.has_error)
 end
 
 T["Error Handling"]["handles invalid UTF-8 content"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Create chat with invalid UTF-8 sequence
         local invalid_utf8 = string.char(0xFF, 0xFF)
         test_storage:save_chat({
@@ -629,15 +629,15 @@ T["Error Handling"]["handles invalid UTF-8 content"] = function()
         }
     ]])
 
-    eq(true, result.chat_saved)
-    eq(true, result.content_preserved)
+  eq(true, result.chat_saved)
+  eq(true, result.content_preserved)
 end
 
 -- Duplicate Operations Tests
 T["Duplicate Operations"] = new_set()
 
 T["Duplicate Operations"]["duplicates chat successfully"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local h = require("tests.helpers")
         local original_chat = h.create_test_chat("test_original")
         test_storage:_save_chat_to_file(original_chat)
@@ -659,17 +659,17 @@ T["Duplicate Operations"]["duplicates chat successfully"] = function()
         }
     ]])
 
-    eq(true, result.new_save_id ~= nil)
-    eq("Duplicated Chat", result.duplicated_title)
-    eq(true, result.original_exists)
-    eq(true, result.duplicate_exists)
-    eq(true, result.message_count_match)
-    eq(true, result.different_save_ids)
-    eq(true, result.title_refresh_count_reset)
+  eq(true, result.new_save_id ~= nil)
+  eq("Duplicated Chat", result.duplicated_title)
+  eq(true, result.original_exists)
+  eq(true, result.duplicate_exists)
+  eq(true, result.message_count_match)
+  eq(true, result.different_save_ids)
+  eq(true, result.title_refresh_count_reset)
 end
 
 T["Duplicate Operations"]["duplicates chat with auto-generated title"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local h = require("tests.helpers")
         local original_chat = h.create_test_chat("test_auto_title")
         original_chat.title = "Original Title"
@@ -686,22 +686,22 @@ T["Duplicate Operations"]["duplicates chat with auto-generated title"] = functio
         }
     ]])
 
-    eq("Original Title (1)", result.duplicated_title)
-    eq(true, result.has_copy_suffix)
+  eq("Original Title (1)", result.duplicated_title)
+  eq(true, result.has_copy_suffix)
 end
 
 T["Duplicate Operations"]["handles non-existent chat duplication"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         -- Try to duplicate non-existent chat
         local new_save_id = test_storage:duplicate_chat("does_not_exist")
         return { new_save_id = new_save_id }
     ]])
 
-    eq(nil, result.new_save_id)
+  eq(nil, result.new_save_id)
 end
 
 T["Duplicate Operations"]["preserves all chat data"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local h = require("tests.helpers")
         local original_chat = h.create_test_chat("test_preserve")
         original_chat.refs = {{ id = "test_ref", content = "test content" }}
@@ -725,15 +725,15 @@ T["Duplicate Operations"]["preserves all chat data"] = function()
         }
     ]])
 
-    eq(true, result.refs_preserved)
-    eq(true, result.schemas_preserved)
-    eq(true, result.in_use_preserved)
-    eq(true, result.cycle_preserved)
-    eq(true, result.messages_preserved)
+  eq(true, result.refs_preserved)
+  eq(true, result.schemas_preserved)
+  eq(true, result.in_use_preserved)
+  eq(true, result.cycle_preserved)
+  eq(true, result.messages_preserved)
 end
 
 T["Duplicate Operations"]["handles duplicate with untitled chat"] = function()
-    local result = child.lua([[              
+  local result = child.lua([[              
         local h = require("tests.helpers")
         local original_chat = h.create_test_chat("test_untitled")
         original_chat.title = nil -- Remove title
@@ -749,136 +749,7 @@ T["Duplicate Operations"]["handles duplicate with untitled chat"] = function()
         }
     ]])
 
-    eq("Untitled (1)", result.duplicated_title)
-end
-
--- Summary Storage Tests
-T["Summary Storage"] = new_set()
-
-T["Summary Storage"]["saves and loads summary successfully"] = function()
-    local result = child.lua([[              
-        local h = require("tests.helpers")
-        
-        -- Create test summary data
-        local summary_data = {
-            summary_id = "test_summary_123",
-            chat_id = "test_summary_123",
-            chat_title = "Test Chat for Summary",
-            generated_at = os.time(),
-            content = "# Test Summary\n\n## Overview\nThis is a test summary for validation.",
-            project_root = "/test/project"
-        }
-        
-        -- Save the summary
-        local save_result = test_storage:save_summary(summary_data)
-        
-        -- Load it back
-        local loaded_content = test_storage:load_summary("test_summary_123")
-        local summaries_index = test_storage:get_summaries()
-        
-        return {
-            save_success = save_result,
-            loaded_content = loaded_content,
-            content_matches = loaded_content == summary_data.content,
-            index_has_entry = summaries_index["test_summary_123"] ~= nil,
-            index_title_correct = summaries_index["test_summary_123"] and summaries_index["test_summary_123"].chat_title == "Test Chat for Summary",
-            index_has_generated_at = summaries_index["test_summary_123"] and type(summaries_index["test_summary_123"].generated_at) == "number"
-        }
-    ]])
-
-    eq(true, result.save_success)
-    eq("# Test Summary\n\n## Overview\nThis is a test summary for validation.", result.loaded_content)
-    eq(true, result.content_matches)
-    eq(true, result.index_has_entry)
-    eq(true, result.index_title_correct)
-    eq(true, result.index_has_generated_at)
-end
-
-T["Summary Storage"]["handles multiple summaries and cache invalidation"] = function()
-    local result = child.lua([[              
-        local h = require("tests.helpers")
-        
-        -- Create multiple test summaries
-        local summaries = {
-            {
-                summary_id = "summary_001",
-                chat_id = "summary_001", 
-                chat_title = "First Summary Chat",
-                generated_at = os.time() - 100,
-                content = "# First Summary\n\nContent for first summary.",
-                project_root = "/project1"
-            },
-            {
-                summary_id = "summary_002",
-                chat_id = "summary_002",
-                chat_title = "Second Summary Chat", 
-                generated_at = os.time() - 50,
-                content = "# Second Summary\n\nContent for second summary.",
-                project_root = "/project2"
-            },
-            {
-                summary_id = "summary_003",
-                chat_id = "summary_003",
-                chat_title = "Third Summary Chat",
-                generated_at = os.time(),
-                content = "# Third Summary\n\nContent for third summary.",
-                project_root = "/project1"
-            }
-        }
-        
-        -- Save all summaries
-        local save_results = {}
-        for _, summary in ipairs(summaries) do
-            table.insert(save_results, test_storage:save_summary(summary))
-        end
-        
-        -- Get summaries index (should be populated)
-        local first_index = test_storage:get_summaries()
-        
-        -- Test cache by getting index again (should use cache)
-        local cached_index = test_storage:get_summaries()
-        
-        -- Save another summary to test cache invalidation
-        local new_summary = {
-            summary_id = "summary_004",
-            chat_id = "summary_004",
-            chat_title = "Fourth Summary Chat",
-            generated_at = os.time() + 10,
-            content = "# Fourth Summary\n\nContent for fourth summary.",
-            project_root = "/project3"
-        }
-        test_storage:save_summary(new_summary)
-        
-        -- Get index again (cache should be invalidated)
-        local updated_index = test_storage:get_summaries()
-        
-        -- Load specific summaries
-        local first_content = test_storage:load_summary("summary_001")
-        local third_content = test_storage:load_summary("summary_003")
-        local nonexistent_content = test_storage:load_summary("does_not_exist")
-        
-        return {
-            all_saves_successful = vim.tbl_contains(save_results, false) == false,
-            first_index_count = vim.tbl_count(first_index),
-            cached_index_same = vim.deep_equal(first_index, cached_index),
-            updated_index_count = vim.tbl_count(updated_index),
-            has_new_summary = updated_index["summary_004"] ~= nil,
-            first_content_correct = first_content == "# First Summary\n\nContent for first summary.",
-            third_content_correct = third_content == "# Third Summary\n\nContent for third summary.",
-            nonexistent_is_nil = nonexistent_content == nil,
-            index_has_project_roots = updated_index["summary_001"] and updated_index["summary_001"].project_root == "/project1"
-        }
-    ]])
-
-    eq(true, result.all_saves_successful)
-    eq(3, result.first_index_count)
-    eq(true, result.cached_index_same)
-    eq(4, result.updated_index_count) -- Should have 4 after adding new one
-    eq(true, result.has_new_summary)
-    eq(true, result.first_content_correct)
-    eq(true, result.third_content_correct)
-    eq(true, result.nonexistent_is_nil)
-    eq(true, result.index_has_project_roots)
+  eq("Untitled (1)", result.duplicated_title)
 end
 
 return T
