@@ -147,6 +147,8 @@ function UI:create_chat(chat_data)
   local messages = chat_data.messages or {}
   local save_id = chat_data.save_id
   local title = chat_data.title
+  local acp_session_id = chat_data.acp_session_id -- both nil for http
+  local acp_command = chat_data.acp_command
 
   messages = messages or {}
   local last_msg = messages[#messages]
@@ -163,15 +165,25 @@ function UI:create_chat(chat_data)
   local context_utils = require("codecompanion.utils.context")
   local last_active_buffer = require("codecompanion._extensions.history.utils").get_editor_info().last_active
   local context = context_utils.get(last_active_buffer and last_active_buffer.bufnr or nil)
-  ---@param adapter  string
+  ---@param adapter  table
   ---@param settings table?
   local function _create_chat(adapter, settings)
+    local complete_adapter = {}
+    if adapter.type == "acp" then
+      local config_adapter = config.adapters.acp[adapter.name]
+      complete_adapter = vim.tbl_deep_extend("keep", adapter, config_adapter)
+      complete_adapter = require("codecompanion.adapters").resolve(complete_adapter)
+    else
+      complete_adapter = adapter
+    end
     local chat = require("codecompanion.interactions.chat").new({
       save_id = save_id,
+      acp_session_id = acp_session_id,
+      acp_command = acp_command,
       messages = messages,
       buffer_context = context,
       settings = settings,
-      adapter = adapter, -- [[@as CodeCompanion.Adapter]]
+      adapter = complete_adapter, -- [[@as CodeCompanion.Adapter]]
       title = title,
       --INFO: No need to ignore system prompt here, thanks to oli we don't add system messages with same tag (`from_config`) twice.
       -- This also fixes `gx` removing the system prompt from the chat if we pass `ignore_system_prompt = true`

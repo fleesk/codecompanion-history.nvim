@@ -17,11 +17,13 @@
 
 ---@class CodeCompanion.History.ChatData
 ---@field save_id              string
+---@field acp_session_id?      CodeCompanion.ACP.Connection only for acp connections
+---@field acp_command?         CodeCompanion.ACP.Connection
 ---@field title?               string
 ---@field messages             CodeCompanion.History.ChatMessage[]
 ---@field updated_at           number
 ---@field settings             table
----@field adapter              string
+---@field adapter              table
 ---@field refs?                table -- Deprecated: for backward compatibility with old chats
 ---@field context_items?       table -- New: replaces refs
 ---@field schemas?             table

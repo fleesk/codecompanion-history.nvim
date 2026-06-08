@@ -202,11 +202,22 @@ function Storage:save_chat(chat)
   -- Create chat data object requiring valid types
   ---@type CodeCompanion.History.ChatData
   local chat_data = {
+    acp_session_id = chat.acp_connection and chat.acp_connection.session_id,
+    acp_command = chat.adapter and chat.adapter.commands and chat.adapter.commands.selected,
     title = chat.title or "Untitled",
     save_id = chat.opts.save_id,
     messages = chat.messages or {},
     settings = chat.settings or {},
-    adapter = chat.adapter and chat.adapter.name or "unknown",
+    adapter = {
+      type = chat.adapter and chat.adapter.type or "http",
+      name = chat.adapter and chat.adapter.name or "unknown",
+      -- formatted_name = chat.adapter and chat.adapter.formatted_name or "unknown",
+      model = chat.adapter and chat.adapter.model and chat.adapter.model.name,
+      commands = chat.adapter and chat.adapter.commands,
+      -- defaults = chat.adapter and chat.adapter.defaults,
+      -- parameters = chat.adapter and chat.adapter.parameters,
+      -- roles = chat.adapter and chat.adapter.roles,
+    },
     updated_at = os.time(),
     context_items = chat.context_items or {},
     schemas = (chat.tool_registry and chat.tool_registry.schemas) or {},
