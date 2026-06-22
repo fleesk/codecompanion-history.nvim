@@ -10,6 +10,6 @@ A drastically simplified fork of [codecompanion-history.nvim](https://github.com
 - Filtering
 - Chat Expiration
 
-## 📄 License
+## License
 
 MIT
