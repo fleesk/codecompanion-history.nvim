@@ -47,7 +47,6 @@ function History.new(opts)
   })
   history.opts = opts
   history.storage = require("codecompanion._extensions.history.storage").new(opts)
-  vim.notify("before ui")
   history.ui = require("codecompanion._extensions.history.ui").new(opts, history.storage)
 
   -- Setup commands
